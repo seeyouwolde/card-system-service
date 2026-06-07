@@ -7,15 +7,23 @@ import com.demo.travelcardsystem.entity.Station;
 import com.demo.travelcardsystem.entity.TravelCard;
 import com.demo.travelcardsystem.entity.TravelCardObserver;
 import com.demo.travelcardsystem.repository.InMemoryCardTransactionRepository;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 
 @SpringBootApplication(scanBasePackages = {"com.demo.travelcardsystem"})
-public class TravelcardsystemApplication{
+@EnableJpaRepositories(basePackages = "com.demo.travelcardsystem.repository")
+@EntityScan(basePackages = "com.demo.travelcardsystem.entity")
+
+
+public class TravelcardsystemApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(TravelcardsystemApplication.class, args);
@@ -30,40 +38,54 @@ public class TravelcardsystemApplication{
 
     @Bean
     public RuleCollection loadAllTravelStrategy(TravelStrategy travelStrategy) {
-       return travelStrategy.loadAllBusinessRules();
+        return travelStrategy.loadAllBusinessRules();
     }
 
     @Bean
     public Boolean loadAllStation(InMemoryCardTransactionRepository inMemoryCardTransactionRepository) {
         Set<Station> stations = new HashSet<>();
 
-        //ADD Algubaiba
-        stations.add(new Station("Algubaiba", new HashSet<>(Arrays.asList(Zone.ONE))));
-        //ADD Jumeirah
-        stations.add(new Station("Jumeirah", new HashSet<>(Arrays.asList(Zone.ONE, Zone.TWO))));
-        //ADD Bur Dubai
-        stations.add(new Station("Bur Dubai", new HashSet<>(Arrays.asList(Zone.THREE))));
-        //ADD Deirah
-        stations.add(new Station("Deirah", new HashSet<>(Arrays.asList(Zone.TWO))));
+        Station algubaiba = new Station();
+        algubaiba.setName("Algubaiba");
+        algubaiba.setZones(new HashSet<>(Arrays.asList(Zone.ONE)));
+        stations.add(algubaiba);
+
+        Station jumeirah = new Station();
+        jumeirah.setName("Jumeirah");
+        jumeirah.setZones(new HashSet<>(Arrays.asList(Zone.ONE, Zone.TWO)));
+        stations.add(jumeirah);
+
+        Station burDubai = new Station();
+        burDubai.setName("Bur Dubai");
+        burDubai.setZones(new HashSet<>(Arrays.asList(Zone.THREE)));
+        stations.add(burDubai);
+
+        Station deirah = new Station();
+        deirah.setName("Deirah");
+        deirah.setZones(new HashSet<>(Arrays.asList(Zone.TWO)));
+        stations.add(deirah);
 
         return inMemoryCardTransactionRepository.addAllStationsToStationStore(stations);
     }
 
     @Bean
-    public Boolean loadInitialCards(InMemoryCardTransactionRepository inMemoryCardTransactionRepository) {
+    public Boolean loadInitialCards(
+            InMemoryCardTransactionRepository inMemoryCardTransactionRepository,
+            TravelCardObserver travelCardObserver) {
+
         TravelCard firstTravelCard = new TravelCard();
         firstTravelCard.setCardNumber("A101");
         firstTravelCard.setBalance(30);
+        firstTravelCard.registerObserver(travelCardObserver);
 
         TravelCard secondTravelCard = new TravelCard();
         secondTravelCard.setCardNumber("B201");
         secondTravelCard.setBalance(50);
+        secondTravelCard.registerObserver(travelCardObserver);
 
         inMemoryCardTransactionRepository.registerNewCard(firstTravelCard);
         inMemoryCardTransactionRepository.registerNewCard(secondTravelCard);
 
         return true;
     }
-
-
 }

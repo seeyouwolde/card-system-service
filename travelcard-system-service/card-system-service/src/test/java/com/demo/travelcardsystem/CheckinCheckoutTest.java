@@ -35,6 +35,7 @@ public class CheckinCheckoutTest extends IntegrationTest {
     @BeforeEach
     public void resetRepository() {
         inMemoryCardTransactionRepository.clearTravelCardStore();
+        travelHelperTest.loadStationsForTest(); // Load stations before each test
     }
 
     @DisplayName("User take few trips and check balance at end of the trip")

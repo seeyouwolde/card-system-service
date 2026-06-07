@@ -1,64 +1,106 @@
 package com.demo.travelcardsystem.repository;
 
+import com.demo.travelcardsystem.entity.Journey;
 import com.demo.travelcardsystem.entity.Station;
 import com.demo.travelcardsystem.entity.TravelCard;
+import com.demo.travelcardsystem.entity.TravelCardObserver;
 import com.demo.travelcardsystem.exception.InvalidCardException;
 import com.demo.travelcardsystem.exception.InvalidDataProvidedException;
-import com.demo.travelcardsystem.exception.InvalidRechargeAmount;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 @Repository
 public class InMemoryCardTransactionRepository {
 
-    // Key is cardNumber
-    private ConcurrentMap<String, TravelCard> travelCardStore = new ConcurrentHashMap<>();
-    private Set<Station> stationStore = new HashSet<>();
+    private final TravelCardJpaRepository travelCardJpaRepository;
+    private final StationJpaRepository stationJpaRepository;
+    private final TravelCardObserver travelCardObserver;
+
+    /*
+     * Current journey is temporary trip state.
+     * TravelCard balance is saved in MySQL, but currentJourney is not saved because it is @Transient.
+     */
+    private final Map<String, Journey> currentJourneyStore = new ConcurrentHashMap<>();
+
+    public InMemoryCardTransactionRepository(
+            TravelCardJpaRepository travelCardJpaRepository,
+            StationJpaRepository stationJpaRepository,
+            TravelCardObserver travelCardObserver) {
+        this.travelCardJpaRepository = travelCardJpaRepository;
+        this.stationJpaRepository = stationJpaRepository;
+        this.travelCardObserver = travelCardObserver;
+    }
 
     public TravelCard registerNewCard(TravelCard travelCard) {
-        // Check if card already exists. Then throw exception
-        if(null != travelCardStore.get(travelCard.getCardNumber())) {
-            throw new InvalidCardException("This card is already registered.");
+        if (travelCardJpaRepository.existsById(travelCard.getCardNumber())) {
+            throw new InvalidCardException("Card already exists");
         }
-        travelCardStore.put(travelCard.getCardNumber(), travelCard);
-        return travelCard;
+
+        travelCard.registerObserver(travelCardObserver);
+        return travelCardJpaRepository.save(travelCard);
     }
 
     public TravelCard findCardByCardNumber(String cardNumber) {
-        TravelCard travelCard = travelCardStore.get(cardNumber);
-        if(travelCard == null) {
-            throw new InvalidCardException("This card is Invalid. Please use a valid card");
-        }
+        TravelCard travelCard = travelCardJpaRepository.findById(cardNumber)
+                .orElseThrow(() -> new InvalidCardException("Card not found"));
+
+        travelCard.registerObserver(travelCardObserver);
+
+        Journey currentJourney = findCurrentJourneyByCardNumber(cardNumber);
+        travelCard.setCurrentJourney(currentJourney);
 
         return travelCard;
     }
 
+    public List<String> fetchAllCardNumber() {
+        return travelCardJpaRepository.findAll()
+                .stream()
+                .map(TravelCard::getCardNumber)
+                .collect(Collectors.toList());
+    }
+
+    public Boolean addAllStationsToStationStore(Set<Station> stations) {
+        stationJpaRepository.saveAll(stations);
+        return true;
+    }
+
     public Station findStationByName(String stationName) {
-       return stationStore.stream().filter(station -> station.getName().equals(stationName)).findAny()
-               .orElseThrow(InvalidDataProvidedException::new);
+        return stationJpaRepository.findById(stationName)
+                .orElseThrow(InvalidDataProvidedException::new);
     }
 
-    public boolean addAllStationsToStationStore(Set<Station> stations) {
-        clearStationStore();
-        return stationStore.addAll(stations);
+    public List<Station> fetchAllStations() {
+        return stationJpaRepository.findAll();
     }
 
-    public void clearStationStore() {
-        stationStore.clear();
+    public TravelCard updateCard(TravelCard travelCard) {
+        travelCard.registerObserver(travelCardObserver);
+        return travelCardJpaRepository.save(travelCard);
+    }
+
+    public Journey findCurrentJourneyByCardNumber(String cardNumber) {
+        return currentJourneyStore.get(cardNumber);
+    }
+
+    public void saveCurrentJourney(String cardNumber, Journey journey) {
+        currentJourneyStore.put(cardNumber, journey);
+    }
+
+    public void clearCurrentJourney(String cardNumber) {
+        currentJourneyStore.remove(cardNumber);
     }
 
     public void clearTravelCardStore() {
-        travelCardStore.clear();
+        currentJourneyStore.clear();
+        travelCardJpaRepository.deleteAll();
     }
 
-
-    public List<String> fetchAllCardNumber() {
-        return new ArrayList<>(travelCardStore.keySet());
+    public void clearStationStore() {
+        stationJpaRepository.deleteAll();
     }
 }

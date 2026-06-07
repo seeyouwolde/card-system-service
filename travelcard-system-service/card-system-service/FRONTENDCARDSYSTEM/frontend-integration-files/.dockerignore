@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.npm
+
+# Build directories
+dist/
+build/
+.vercel
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Git
+.git
+.gitignore
+
+# Docker config
+Dockerfile
+.dockerignore
+.github/
+README.md

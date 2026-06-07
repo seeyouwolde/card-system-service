@@ -2,6 +2,7 @@ package com.demo.travelcardsystem.controller;
 
 import com.demo.travelcardsystem.model.request.CardRegistrationRequest;
 import com.demo.travelcardsystem.model.request.SwipeRequest;
+import com.demo.travelcardsystem.model.response.StationZoneResponse;
 import com.demo.travelcardsystem.model.response.TravelCardResponse;
 import com.demo.travelcardsystem.service.TravellerService;
 import lombok.AllArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.List;
 @CrossOrigin
 public class TravellerController {
 
-    private TravellerService travellerService;
+    private final TravellerService travellerService;
 
     @GetMapping(value = "/ping")
     public String pingMe() {
@@ -37,15 +38,31 @@ public class TravellerController {
         return travellerService.swipeCard(swipeRequest);
     }
 
+    /*
+     * Kept this endpoint for your existing frontend:
+     * GET /api/card/details/{cardNumber}
+     */
+    @GetMapping(value = "/details/{cardNumber}")
+    public TravelCardResponse checkCardDetailByDetailsPath(@PathVariable String cardNumber) {
+        return travellerService.checkCardDetail(cardNumber);
+    }
+
+    /*
+     * Added this endpoint because your test expects:
+     * GET /api/card/{cardNumber}
+     */
     @GetMapping(value = "/{cardNumber}")
     public TravelCardResponse checkCardDetail(@PathVariable String cardNumber) {
         return travellerService.checkCardDetail(cardNumber);
     }
 
-    @GetMapping
+    @GetMapping(value = "/cards")
     public List<String> fetchAllCard() {
         return travellerService.fetchAllCard();
     }
 
-
+    @GetMapping(value = "/stations")
+    public List<StationZoneResponse> fetchAllStationsWithZones() {
+        return travellerService.fetchAllStationsWithZones();
+    }
 }

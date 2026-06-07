@@ -2,38 +2,47 @@ package com.demo.travelcardsystem.entity;
 
 import com.demo.travelcardsystem.service.util.FareCalculator;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
-@Data
-@AllArgsConstructor
 @Component
-public class TravelCardObserver implements Observer<TravelCard>{
+@AllArgsConstructor
+public class TravelCardObserver implements Observer<TravelCard> {
 
-    private FareCalculator fareCalculator;
+    private final FareCalculator fareCalculator;
 
     @Override
     public void reactOnChange(TravelCard travelCard) {
-        TravelCard card = travelCard;
-        Journey journey =  travelCard.getCurrentJourney();
+        Journey journey = travelCard.getCurrentJourney();
 
-        //When journey is completed then add max charge back and debit chargeable fare
-        if(journey.isJourneyCompleted()) {
-            card.addCredit(fareCalculator.getTravelStrategy().getRuleCollection().getMaxFare());
-            debitChargeableFare(card);
+        if (journey == null) {
+            return;
+        }
+
+        double maxFare = fareCalculator
+                .getTravelStrategy()
+                .getRuleCollection()
+                .getMaxFare();
+
+        if (journey.isJourneyCompleted()) {
+            travelCard.addCredit(maxFare);
+            debitChargeableFare(travelCard);
         } else {
-            // If journey starts the charge max amount
-            card.debitAmount(fareCalculator.getTravelStrategy().getRuleCollection().getMaxFare());
+            travelCard.debitAmount(maxFare);
         }
     }
 
-    private void debitChargeableFare(TravelCard card) {
-        Double maxFare = fareCalculator.getTravelStrategy().getRuleCollection().getMaxFare();
+    private void debitChargeableFare(TravelCard travelCard) {
+        double maxFare = fareCalculator
+                .getTravelStrategy()
+                .getRuleCollection()
+                .getMaxFare();
 
-        Double fareAmount = Optional.of(fareCalculator.calculate(card.getCurrentJourney())).orElse(maxFare);
-        // Fare Amount is either the calculated fareAmount or the max Fare
-        card.debitAmount(fareAmount);
+        Double calculatedFare = fareCalculator.calculate(travelCard.getCurrentJourney());
+
+        if (calculatedFare == null) {
+            travelCard.debitAmount(maxFare);
+        } else {
+            travelCard.debitAmount(calculatedFare);
+        }
     }
 }
