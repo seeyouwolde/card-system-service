@@ -58,7 +58,7 @@ public class CheckinCheckoutTest extends IntegrationTest {
                         .content(objectMapper.writeValueAsString(swipeRequest)))
                 .andExpect(status().isOk());
 
-        System.out.println("Card balance after journey-1 is -> " + inMemoryCardTransactionRepository.findCardByCardNumber(travelCard.getCardNumber()).getBalance());
+        // System.out.println("Card balance after journey-1 is -> " + inMemoryCardTransactionRepository.findCardByCardNumber(travelCard.getCardNumber()).getBalance()); // Removed debug print
 
         //AND - user take 106 bus from Thunder Bay to Dryden
         swipeRequest = travelHelperTest.prepareSwipeRequest(travelCard.getCardNumber(),"Jumeirah", TransportType.BUS);
@@ -73,7 +73,7 @@ public class CheckinCheckoutTest extends IntegrationTest {
                         .content(objectMapper.writeValueAsString(swipeRequest)))
                 .andExpect(status().isOk());
 
-        System.out.println("Card balance after journey-2 is -> " + inMemoryCardTransactionRepository.findCardByCardNumber(travelCard.getCardNumber()).getBalance());
+        // System.out.println("Card balance after journey-2 is -> " + inMemoryCardTransactionRepository.findCardByCardNumber(travelCard.getCardNumber()).getBalance()); // Removed debug print
 
 
         //AND - user take Train Dryden to Slate Falls

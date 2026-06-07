@@ -6,23 +6,21 @@ import com.demo.travelcardsystem.constant.Zone;
 import com.demo.travelcardsystem.entity.Station;
 import com.demo.travelcardsystem.entity.TravelCard;
 import com.demo.travelcardsystem.entity.TravelCardObserver;
+import com.demo.travelcardsystem.exception.InvalidCardException;
 import com.demo.travelcardsystem.repository.InMemoryCardTransactionRepository;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-
 @SpringBootApplication(scanBasePackages = {"com.demo.travelcardsystem"})
 @EnableJpaRepositories(basePackages = "com.demo.travelcardsystem.repository")
 @EntityScan(basePackages = "com.demo.travelcardsystem.entity")
-
-
 public class TravelcardsystemApplication {
 
     public static void main(String[] args) {
@@ -69,23 +67,25 @@ public class TravelcardsystemApplication {
     }
 
     @Bean
-    public Boolean loadInitialCards(
-            InMemoryCardTransactionRepository inMemoryCardTransactionRepository,
-            TravelCardObserver travelCardObserver) {
-
-        TravelCard firstTravelCard = new TravelCard();
-        firstTravelCard.setCardNumber("A101");
-        firstTravelCard.setBalance(30);
-        firstTravelCard.registerObserver(travelCardObserver);
-
-        TravelCard secondTravelCard = new TravelCard();
-        secondTravelCard.setCardNumber("B201");
-        secondTravelCard.setBalance(50);
-        secondTravelCard.registerObserver(travelCardObserver);
-
-        inMemoryCardTransactionRepository.registerNewCard(firstTravelCard);
-        inMemoryCardTransactionRepository.registerNewCard(secondTravelCard);
+    public Boolean loadInitialCards(InMemoryCardTransactionRepository inMemoryCardTransactionRepository) {
+        createCardIfNotExists(inMemoryCardTransactionRepository, "A101", 30);
+        createCardIfNotExists(inMemoryCardTransactionRepository, "B201", 50);
 
         return true;
+    }
+
+    private void createCardIfNotExists(
+            InMemoryCardTransactionRepository inMemoryCardTransactionRepository,
+            String cardNumber,
+            double balance) {
+        try {
+            inMemoryCardTransactionRepository.findCardByCardNumber(cardNumber);
+        } catch (InvalidCardException exception) {
+            TravelCard travelCard = new TravelCard();
+            travelCard.setCardNumber(cardNumber);
+            travelCard.setBalance(balance);
+
+            inMemoryCardTransactionRepository.registerNewCard(travelCard);
+        }
     }
 }

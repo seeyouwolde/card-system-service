@@ -17,7 +17,7 @@ public class TravelStrategy {
     private final FareProperties fareProperties;
 
     public RuleCollection loadAllBusinessRules() {
-        System.out.println("FareProperties loaded: " + fareProperties); // Debug print
+        // System.out.println("FareProperties loaded: " + fareProperties); // Debug print - REMOVED
         addAnywhereInZoneOneRule(fareProperties.getZoneOne());
         addAnyOneZoneOutsideZoneOneRule(fareProperties.getOneZoneOutsideZoneOne());
         addAnyTwoZoneIncludingZoneOneRule(fareProperties.getTwoZonesIncludingZoneOne());

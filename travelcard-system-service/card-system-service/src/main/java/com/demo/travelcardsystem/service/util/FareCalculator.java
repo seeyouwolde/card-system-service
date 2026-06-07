@@ -42,7 +42,7 @@ public class FareCalculator {
                 .get();
 
         //finally, return the chargeable fare
-        System.out.println("Calculated fare for journey: " + applicableRule.getChargeableFare()); // Debug print
+        System.out.println("DEBUG: Calculated fare for journey: " + applicableRule.getChargeableFare() + " for journey " + journey); // Re-added debug print
         return applicableRule.getChargeableFare();
     }
 }
